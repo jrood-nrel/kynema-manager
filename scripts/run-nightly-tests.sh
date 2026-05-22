@@ -39,5 +39,5 @@ prune_envs() {
 
 cmd "prune_envs"
 
-packages_to_test="kynema-driver kynema-sgf kynema-ugf kynema-fmb"
+packages_to_test="pelec pelelmex"
 cmd "time ${KYNEMA_MANAGER}/scripts/deploy.py --daily --cdash ${packages_to_test} --ranks ${nranks} --overwrite --regression_tests ${packages_to_test}"
