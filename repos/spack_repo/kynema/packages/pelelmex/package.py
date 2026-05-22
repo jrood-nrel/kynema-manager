@@ -4,10 +4,10 @@
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 
 from spack.package import *
-from spack_repo.builtin.build_systems.cmake import CMakePackage
+from spack_repo.builtin.build_systems.cmake import CMakePackage, generator
 from spack_repo.builtin.build_systems.cuda import CudaPackage
 from spack_repo.builtin.build_systems.rocm import ROCmPackage
-from spack_repo.kynema.packages.ctest_package.package import *
+from spack_repo.exawind.packages.ctest_package.package import *
 
 
 class Pelelmex(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
@@ -21,6 +21,8 @@ class Pelelmex(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
     tags = ["ecp", "ecp-apps"]
 
     license("BSD-3-Clause")
+
+    #generator("ninja")
 
     version("main", branch="development", submodules=True)
 
@@ -44,16 +46,19 @@ class Pelelmex(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
     variant("eb", default=True, description="Enable embedded boundaries")
     variant("mpi", default=True, description="Enable MPI support")
     variant("openmp", default=False, description="Enable OpenMP for CPU builds")
-    variant("particles", default=False, description="Enable AMReX particles")
+    variant("particles", default=True, description="Enable AMReX particles")
     variant("shared", default=True, description="Build shared libraries")
     variant("tiny_profile", default=True, description="Activate tiny profile")
-    variant("hdf5", default=False, description="Enable HDF5 plots with ZFP compression")
+    variant("hdf5", default=True, description="Enable HDF5 plots with ZFP compression")
     variant("sycl", default=False, description="Enable SYCL backend")
     variant("hypre", default=False, description="Enable hypre integration")
 
+    depends_on("c", type="build")
+    depends_on("cxx", type="build")
     depends_on("mpi", when="+mpi")
     depends_on("hdf5~mpi", when="+hdf5~mpi")
     depends_on("hdf5+mpi", when="+hdf5+mpi")
+    depends_on("hdf5@:1.14.4-3", when="+hdf5")
     depends_on("h5z-zfp", when="+hdf5")
     depends_on("zfp", when="+hdf5")
     depends_on("ascent~mpi", when="+ascent~mpi")
@@ -61,6 +66,9 @@ class Pelelmex(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
     depends_on("hypre@2.20.0:", when="+hypre")
     depends_on("hypre+mpi", when="+hypre+mpi")
     depends_on("hypre+sycl", when="+hypre+sycl")
+    depends_on("py-numpy@2:")
+    depends_on("py-pandas~performance")
+    depends_on("py-nose")
 
     for arch in CudaPackage.cuda_arch_values:
         depends_on("ascent+cuda cuda_arch=%s" % arch, when="+ascent+cuda cuda_arch=%s" % arch)
@@ -80,6 +88,8 @@ class Pelelmex(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
         if spec.satisfies("+asan"):
             env.append_flags("CXXFLAGS", "-fsanitize=address -fno-omit-frame-pointer")
             env.set("LSAN_OPTIONS", "suppressions={0}".format(join_path(self.package_dir, "sup.asan")))
+        if self.spec.satisfies("+cuda"):
+            env.set("CUDAHOSTCXX", spack_cxx)
 
     def cmake_args(self):
         define = self.define
@@ -104,6 +114,7 @@ class Pelelmex(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
             self.define_from_variant("PELE_PRECISION", "precision"),
             self.define_from_variant("PELE_ENABLE_CLANG_TIDY", "clangtidy"),
             self.define_from_variant("PELE_ENABLE_HIP", "rocm"),
+            self.define_from_variant("PELE_ENABLE_SANITIZE_FOR_TESTS", "asan"),
         ]
 
         if spec.satisfies("+mpi"):
@@ -117,11 +128,7 @@ class Pelelmex(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
             args.append(define("HDF5_IS_PARALLEL", spec.satisfies("+mpi")))
 
         if spec.satisfies("+cuda"):
-            amrex_arch = [
-                "{0:.1f}".format(float(i) / 10.0) for i in spec.variants["cuda_arch"].value
-            ]
-            if amrex_arch:
-                args.append(define("AMReX_CUDA_ARCH", amrex_arch))
+            args.append(define("CMAKE_CUDA_ARCHITECTURES", spec.variants["cuda_arch"].value))
 
         if spec.satisfies("+rocm"):
             args.append(define("CMAKE_CXX_COMPILER", spec["hip"].hipcc))

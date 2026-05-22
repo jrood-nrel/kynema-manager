@@ -1,18 +1,16 @@
 # This yaml file will serve as the mapping between specs and gold files
 # This allows us to match specs to golds based on what they satisfy in the environment
 # Specs should be ordered from most to least specific per platform
-cee:
-  - ["kynema-sgf%gcc", "/projects/wind/kynema-manager/environments/cee-golds/opt/linux-rhel8-x86_64/gcc-12.1.0/kynema-sgf-2.1.0-nqomj7kd5rbhrsell25md3zhggpxhdso/golds"]
 ellis:
-  - ["kynema-sgf+cuda%gcc", "/data/ssd1/home/jrood/kynema/golds/current/kynema-sgf/gcc-gpu"]
-  - ["kynema-ugf+cuda%gcc", "/data/ssd1/home/jrood/kynema/golds/current/kynema-ugf/gcc-gpu"]
-  - ["kynema-driver+cuda%gcc", "/data/ssd1/home/jrood/kynema/golds/current/kynema-driver/gcc-gpu"]
-  - ["kynema-sgf+asan%llvm", "/data/ssd1/home/jrood/kynema/golds/current/kynema-sgf/clang-cpu-asan"]
-  - ["kynema-ugf+asan%llvm", "/data/ssd1/home/jrood/kynema/golds/current/kynema-ugf/clang-cpu-asan"]
-  - ["kynema-driver+asan%llvm", "/data/ssd1/home/jrood/kynema/golds/current/kynema-driver/clang-cpu-asan"]
-  - ["kynema-sgf%llvm", "/data/ssd1/home/jrood/kynema/golds/current/kynema-sgf/clang-cpu"]
-  - ["kynema-ugf%llvm", "/data/ssd1/home/jrood/kynema/golds/current/kynema-ugf/clang-cpu"]
-  - ["kynema-driver%llvm", "/data/ssd1/home/jrood/kynema/golds/current/kynema-driver/clang-cpu"]
-  - ["kynema-sgf%gcc", "/data/ssd1/home/jrood/kynema/golds/current/kynema-sgf/gcc-cpu"]
-  - ["kynema-ugf%gcc", "/data/ssd1/home/jrood/kynema/golds/current/kynema-ugf/gcc-cpu"]
-  - ["kynema-driver%gcc", "/data/ssd1/home/jrood/kynema/golds/current/kynema-driver/gcc-cpu"]
+  - ["pelec+cuda%gcc", "/data/ssd1/home/jrood/combustion/golds/current/pelec/gcc-gpu"]
+  - ["pelec~cuda%gcc", "/data/ssd1/home/jrood/combustion/golds/current/pelec/gcc-cpu"]
+  - ["pelec+asan%llvm", "/data/ssd1/home/jrood/combustion/golds/current/pelec/clang-cpu-asan"]
+  - ["pelec~asan%llvm", "/data/ssd1/home/jrood/combustion/golds/current/pelec/clang-cpu"]
+  - ["pelelmex+cuda+eb%gcc", "/data/ssd1/home/jrood/combustion/golds/current/pelelmex/gcc-gpu-eb"]
+  - ["pelelmex~cuda+eb%gcc", "/data/ssd1/home/jrood/combustion/golds/current/pelelmex/gcc-cpu-eb"]
+  - ["pelelmex+asan+eb%llvm", "/data/ssd1/home/jrood/combustion/golds/current/pelelmex/clang-cpu-asan-eb"]
+  - ["pelelmex~asan+eb%llvm", "/data/ssd1/home/jrood/combustion/golds/current/pelelmex/clang-cpu-eb"]
+  - ["pelelmex+cuda%gcc", "/data/ssd1/home/jrood/combustion/golds/current/pelelmex/gcc-gpu"]
+  - ["pelelmex~cuda%gcc", "/data/ssd1/home/jrood/combustion/golds/current/pelelmex/gcc-cpu"]
+  - ["pelelmex+asan%llvm", "/data/ssd1/home/jrood/combustion/golds/current/pelelmex/clang-cpu-asan"]
+  - ["pelelmex~asan%llvm", "/data/ssd1/home/jrood/combustion/golds/current/pelelmex/clang-cpu"]

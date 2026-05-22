@@ -4,10 +4,10 @@
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 
 from spack.package import *
-from spack_repo.builtin.build_systems.cmake import CMakePackage
+from spack_repo.builtin.build_systems.cmake import CMakePackage, generator
 from spack_repo.builtin.build_systems.cuda import CudaPackage
 from spack_repo.builtin.build_systems.rocm import ROCmPackage
-from spack_repo.kynema.packages.ctest_package.package import *
+from spack_repo.exawind.packages.ctest_package.package import *
 
 class Pelec(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
     """An AMR code for compressible reacting flow simulations."""
@@ -20,6 +20,8 @@ class Pelec(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
     tags = ["ecp", "ecp-apps"]
 
     license("BSD-3-Clause")
+
+    generator("ninja")
 
     version("main", branch="development", submodules=True)
 
@@ -43,26 +45,32 @@ class Pelec(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
     variant("masa", default=False, description="Enable MASA integration")
     variant("mpi", default=True, description="Enable MPI support")
     variant("openmp", default=False, description="Enable OpenMP for CPU builds")
-    variant("particles", default=False, description="Enable AMReX particles")
+    variant("particles", default=True, description="Enable AMReX particles")
     variant("shared", default=True, description="Build shared libraries")
     variant("tiny_profile", default=True, description="Activate tiny profile")
-    variant("hdf5", default=False, description="Enable HDF5 plots with ZFP compression")
+    variant("hdf5", default=True, description="Enable HDF5 plots with ZFP compression")
     variant("sycl", default=False, description="Enable SYCL backend")
 
+    depends_on("c", type="build")
+    depends_on("cxx", type="build")
     depends_on("mpi", when="+mpi")
     depends_on("hdf5~mpi", when="+hdf5~mpi")
     depends_on("hdf5+mpi", when="+hdf5+mpi")
+    depends_on("hdf5@:1.14.4-3", when="+hdf5")
     depends_on("h5z-zfp", when="+hdf5")
     depends_on("zfp", when="+hdf5")
     depends_on("masa", when="+masa")
     depends_on("ascent~mpi", when="+ascent~mpi")
     depends_on("ascent+mpi", when="+ascent+mpi")
+    depends_on("py-numpy@2:")
+    depends_on("py-pandas~performance")
+    depends_on("py-nose")
     depends_on("py-matplotlib", when="+masa")
-    depends_on("py-pandas", when="+masa")
 
     for arch in CudaPackage.cuda_arch_values:
         depends_on("ascent+cuda cuda_arch=%s" % arch, when="+ascent+cuda cuda_arch=%s" % arch)
 
+    conflicts("+masa", when="+cuda")
     conflicts("+openmp", when="+cuda")
     conflicts("+openmp", when="+rocm")
     conflicts("+openmp", when="+sycl")
@@ -72,6 +80,8 @@ class Pelec(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
         if spec.satisfies("+asan"):
             env.append_flags("CXXFLAGS", "-fsanitize=address -fno-omit-frame-pointer")
             env.set("LSAN_OPTIONS", "suppressions={0}".format(join_path(self.package_dir, "sup.asan")))
+        if self.spec.satisfies("+cuda"):
+            env.set("CUDAHOSTCXX", spack_cxx)
 
     def cmake_args(self):
         define = self.define
@@ -95,6 +105,7 @@ class Pelec(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
             self.define_from_variant("PELE_PRECISION", "precision"),
             self.define_from_variant("PELE_ENABLE_CLANG_TIDY", "clangtidy"),
             self.define_from_variant("PELE_ENABLE_HIP", "rocm"),
+            self.define_from_variant("PELE_ENABLE_SANITIZE_FOR_TESTS", "asan"),
         ]
 
         if spec.satisfies("+mpi"):
@@ -108,11 +119,7 @@ class Pelec(CtestPackage, CMakePackage, CudaPackage, ROCmPackage):
             args.append(define("HDF5_IS_PARALLEL", spec.satisfies("+mpi")))
 
         if spec.satisfies("+cuda"):
-            amrex_arch = [
-                "{0:.1f}".format(float(i) / 10.0) for i in spec.variants["cuda_arch"].value
-            ]
-            if amrex_arch:
-                args.append(define("AMReX_CUDA_ARCH", amrex_arch))
+            args.append(define("CMAKE_CUDA_ARCHITECTURES", spec.variants["cuda_arch"].value))
 
         if spec.satisfies("+rocm"):
             args.append(define("CMAKE_CXX_COMPILER", spec["hip"].hipcc))
